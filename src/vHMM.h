@@ -9,9 +9,10 @@
 // included dependencies
 #include <vector>
 #include <string>
-#include <Rcpp.h>
+#include "RcppArmadillo.h"
 
 #define EPSILON 1.0e-5
+#define MINSD 0.399  // (1/sqrt(2*pi))
 
 //=================================
 // new structure definition

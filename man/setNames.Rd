@@ -6,7 +6,7 @@ Set the names of the model
 }
 
 \description{
-Function used to set new hidden state names to the model. If it is a categorical model, it also set the observation names. This function verifies that all the parameters size agree with the provided new names.  
+Function used to set new hidden state names to the model. If it is a categorical model, it also sets the labels for the observations. This function verifies that all the parameters size agree with the provided new names.  
 }
 
 \usage{

@@ -16,7 +16,7 @@ generateObservations(hmm, length)
 %- maybe also 'usage' for other objects documented here.
 \arguments{
   \item{hmm}{a list that contains all the necesary variables to define a hidden Markov model.}
-  \item{length}{a value that sets how many observations to be generated.}
+  \item{length}{a value that sets how many observations will be generated.}
 }
 
 \value{

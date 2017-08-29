@@ -126,11 +126,13 @@ void HMM::setEmissionNames(CharacterVector emissionNames)
 {
     if( emissionNames.size() != m_M)
         Rf_error("The number of state names does not coincide with the one declared.");
-    m_ObservationNames = emissionNames;
+    m_ObservationNames = CharacterVector(clone(emissionNames));
 }
 
 void HMM::setB(NumericMatrix B)
 {
+    if(B.ncol() != m_M || B.nrow() != m_N)
+        Rf_error("The emission matrix size is wrong");
     if(verifyMatrix(B) == false)
         Rf_error("The emission matrix is not normalized");
     m_B = NumericMatrix(clone(B));
@@ -138,10 +140,16 @@ void HMM::setB(NumericMatrix B)
 
 void HMM::setParameters(NumericMatrix A, NumericMatrix B, NumericVector Pi)
 {
+    if(Pi.size() != m_N)
+        Rf_error("The initial probability vector size is wrong");
     if(verifyVector(Pi) == false)
         Rf_error("The initial probability vector is not normalized");
+    
+    if(A.ncol() != m_N || A.nrow() != m_N)
+        Rf_error("The transition matrix size is wrong");
     if(verifyMatrix(A) == false)
         Rf_error("The transition matrix is not normalized");  
+
     setB(B);            
     m_Pi = NumericVector(clone(Pi));
     m_A = NumericMatrix(clone(A));    
@@ -301,7 +309,7 @@ void HMM::learnEM(CharacterMatrix sequences, unsigned short int iter, double del
         //  A new parameter initialization is recomended
         expectationMaximization(sequences, pseudo);
         newLL = loglikelihood(sequences) ;
-        if(isnan(newLL))
+        if(std::isnan(newLL))
         {
             if(print)
                 Rcout << "Convergence error, new initialization needed\n";                       
@@ -335,10 +343,10 @@ void HMM::learnBW(CharacterVector sequences, unsigned short int iter, double del
         //  A new parameter initialization is recomended
         BaumWelch(sequences, pseudo);
         newLL = evaluation(sequences);
-        if(isnan(newLL))
+        if(std::isnan(newLL))
         {
             if(print)
-                Rcout << "Error de convergencia, nueva inicialización" << endl;           
+                Rcout << "Convergence error, new initialization needed\n";            
             randomInit();
             lastLL = evaluation(sequences);
             counter++;
@@ -355,27 +363,6 @@ void HMM::learnBW(CharacterVector sequences, unsigned short int iter, double del
     } while(counter < iter && error > delta);
     Rcout << "Finished at Iteration: " << counter << " with Error: " << error  << "\n";
 }
-
-/*
-void HMM::learnEMParallel(CharacterMatrix sequences, unsigned short int iter, double delta , unsigned char pseudo , bool print )
-{
-   double newLL, error;
-   double lastLL = loglikelihood(sequences);
-   unsigned int counter = 0; 
-    
-    //  Ajustamos el modelo
-    do{
-        expectationMaximizationParallel(sequences, pseudo);
-        newLL = loglikelihood(sequences) ;
-        error = fabs(newLL - lastLL);        
-        lastLL = newLL;
-        counter++;
-        if(print)
-            Rcout << "Iter: " << counter << " Error: " << error  << endl;
-    } while(error > delta && counter < iter);
-    Rcout << "\nFinished at Iter: " << counter << " with Error: " << error  << endl;
-}
-*/
 
 //--------------------------------------------------------------------------
 // SIMULATION
@@ -466,37 +453,6 @@ List HMM::toList(void) const
             Named("Pi", getPi() )
     );
 }
-
-
-//  Function to print all the parameters into the console
-/*
-ostream& HMM::print(ostream& out) const
-{
-   // Emission Names
-    CharacterVector nombre2 = getEmissionNames();
-    unsigned int M = nombre2.size();
-    for(unsigned int i = 0; i < M; i++ )
-    {
-        out << "Emision : " << nombre2[i] << ", ";
-    }
-    out << "\n";
-
-    vHMM::print(out);
-    
-    //  Emission matrix values
-    NumericMatrix B = getB();
-    for(unsigned int i = 0; i < m_N; i++ )
-    {
-        for(unsigned int j = 0; j < M; j++ )
-        {
-            out << "B : " << B(i,j)<< ", ";
-        }
-        out << "\n";
-    }
-    
-    return out;
-}
-*/
 
 //--------------------------------------------------------------------------
 // PROTECTED
@@ -680,120 +636,6 @@ void HMM::forwardBackwardGamma(IntegerVector index, scaledMatrix & forward, scal
 // LEARNING
 //--------------------------------------------------------------------------
 
-/* 
-//  TO BE IMPLEMENTED  (memory leak - clone use recommended)
-void HMM::expectationMaximizationParallel( CharacterMatrix sequences, unsigned int pseudo)
-{
-    unsigned int seqLen, length, i, j, k, s;
-    IntegerVector index;
-
-    double temp;
-
-    seqLen = sequences.size();
-    length = sequences[0].size();
-
-    //  Agrego una dimensión para poder hacer el multithread
-    vector<NumericMatrix> Amean(seqLen,
-                            NumericMatrix(m_N,m_N,pseudo));
-    vector<NumericMatrix> Bmean(seqLen,
-                            NumericMatrix(m_N,m_M,pseudo));                            
-    NumericMatrix Pimean(seqLen,m_N, pseudo));
-
-    //  Denominadores
-    NumericMatrix denomA(seqLen,
-                     NumericVector(m_N, pseudo));
-
-    NumericMatrix denomB(seqLen,
-                     NumericVector(m_N, pseudo));                       
-         
-    //  Para cada secuencia vista, ¿region critica?
-    // ToDo: Threadprivate vs private
-    #pragma omp parallel private(i, j, k, index, temp) shared(seqLen, length, Amean, Bmean, Pimean, denomA, denomB )
-    {
-        #pragma omp for
-        for(s = 0; s < seqLen ; s++)
-        {
-            index = toIndex(sequences[s]); 
-            //  Expectation step
-
-            //  Variables para el paso se Esperanza
-            NumericVector scaledf(length,0);
-            NumericVector scaledb(length+ 1,0);
-
-            NumericMatrix matrix(m_N, scaledf); //  Este es gamma
-
-            scaledMatrix forward = {scaledf,  matrix};
-            scaledMatrix backward = {scaledb, matrix};
-
-            // ToDo: revisar el forwardBackward protegido y pasar eel codigo de regreso al forwardBckwardGamma
-            forwardBackwardGamma(index, forward, backward, scaledf, scaledb, matrix, length);
-
-            //  Maximization         
-            //  Estado X_{t}
-            for( i = 0; i < m_N; i++)
-            {
-                Pimean[s][i] = matrix(i,0);                                                           
-
-                //Para cada observación  Este es t-1
-                for(j = 0; j < (length-1); j++)
-                {                
-                    //  Para estado X_{t+1}
-                    for(k = 0; k < m_N ; k++ )
-                    {
-                        temp = (matrix(i,j)*m_A(i,k)*m_B[k][index[j+1]]*backward.matrix[k][j+1])/
-                                            (backward.matrix(i,j)* backward.scaling[j+1] ); // El +1 se hace debido al desfase en la matriz de escalamiento, no porque sea del siguiente tiempo
-                        Amean[s](i,k) += temp;
-
-                        //  Denominador de A dado X_{t}
-                        denomA[s][i] += temp;
-                    }
-                    
-                    //  Para las observaciones, es el mismo valor
-                    Bmean[s][i][index[j]] += matrix(i,j);
-                    denomB[s][i] += matrix(i,j);
-                }
-                //  Ya que el ciclo anterior es hasta (length-2), necesitamos agregar ese ultimo valor en el caso de B y su denominador
-                Bmean[s][i][index[length-1]] += matrix[i][length-1];
-                denomB[s][i] += matrix[i][length-1];  // Quite la división entre el escalamiento ya que es 1
-            }                        
-        } 
-    }
-
-    //Unimos todos los valores generados en el multi-hilo
-    double tempPi, tempDA, tempDB;
-    for(i = 0; i < m_N; i++)
-    {
-        tempPi = tempDA = tempDB = 0;
-        NumericVector tempA(m_N, 0);
-        NumericVector tempB(m_M, 0);
-
-        for(s = 0; s < seqLen; s++)
-        {
-            tempPi+= Pimean[s][i];
-            tempDA+= denomA[s][i];
-            tempDB+= denomB[s][i];
-            for(j = 0; j < m_N ; j++)
-                tempA[j] += Amean[s](i,j);
-            for(j = 0; j < m_M ; j++)
-                tempB[j] += Bmean[s](i,j);                
-        }
-
-        //  Una vez analizadas todas laas secuencias, podemos hacer la división de "normalización"
-        //  Normalizamos Pi
-        m_Pi[i] = tempPi / seqLen;
-
-        //  Normalizamos A
-        for(j = 0; j < m_N; j++)
-            m_A(i,j) = tempA[j]/ tempDA;             
-
-        //  Normalizamos B
-        for(j = 0; j < m_M; j++)
-            m_B(i,j) = tempB[j]/ tempDB;  
-    }
-}
-*/
-
-
 //  Function used for parameter estimation given a set of sequences
 void HMM::expectationMaximization( CharacterMatrix sequences, unsigned int pseudo)
 {
@@ -940,7 +782,6 @@ void HMM::BaumWelch( CharacterVector sequence, unsigned int pseudo)
     }
 }
 
-
 //--------------------------------------------------------------------------
 // MISCELLANEOUS
 //--------------------------------------------------------------------------
@@ -1006,7 +847,7 @@ IntegerVector HMM::toIndex( CharacterVector observations)
             indices[i] = pos;
         else
         {
-            Rcout << "Error en "  <<  observations[i] <<  " , " << i << endl;        
+            Rcout << "Error in "  <<  observations[i] <<  " , " << i << endl;        
             Rf_error("The values must exist in the possible observations of the model");
         }
             

@@ -5,12 +5,12 @@ initHMM <- function(n, m) {
     .Call('initHMM', n, m, PACKAGE = 'RcppHMM')
 }
 
-initGHMM <- function(n) {
-    .Call('initGHMM', n, PACKAGE = 'RcppHMM')
-}
-
 initPHMM <- function(n) {
     .Call('initPHMM', n, PACKAGE = 'RcppHMM')
+}
+
+initGHMM <- function(n, m = 1) {
+    .Call('initGHMM', n, m, PACKAGE = 'RcppHMM')
 }
 
 verifyModel <- function(model) {
@@ -38,14 +38,18 @@ forwardBackward <- function(hmm, sequence) {
 }
 
 loglikelihood <- function(hmm, sequences) {
-    if(is.matrix(sequences))
+    if(is.array(sequences) && length(dim(sequences)) == 3)  # Multivariate input
+        .Call('loglikelihood', hmm, sequences, PACKAGE = 'RcppHMM')
+    else if(is.matrix(sequences) && hmm$Model != "GHMM")
         .Call('loglikelihood', hmm, sequences, PACKAGE = 'RcppHMM')
     else
         .Call('evaluation', hmm, sequence = sequences, method = "f", PACKAGE = 'RcppHMM')    
 }
 
 learnEM <- function(hmm, sequences, iter = 100, delta = 1e-05, pseudo = 0, print = TRUE ){
-    if(is.matrix(sequences))
+    if(is.array(sequences) && length(dim(sequences)) == 3)  # Multivariate input
+        .Call('learnEM', hmm, sequences, iter, delta, pseudo, print, PACKAGE = 'RcppHMM')
+    else if(is.matrix(sequences) && hmm$Model != "GHMM")
         .Call('learnEM', hmm, sequences, iter, delta, pseudo, print, PACKAGE = 'RcppHMM')
     else
         .Call('learnBW', hmm, sequences, iter, delta, pseudo, print, PACKAGE = 'RcppHMM')
@@ -55,5 +59,4 @@ learnEM <- function(hmm, sequences, iter = 100, delta = 1e-05, pseudo = 0, print
 generateObservations <- function(hmm, length) {
     .Call('generateObservations', hmm, length, PACKAGE = 'RcppHMM')
 }
-
 

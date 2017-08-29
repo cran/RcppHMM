@@ -18,7 +18,7 @@ verifyModel(model)
 }
 
 \details{
-The model must have an stochastic transition matrix and an stochastic initial probability vector, also the row and column sizes must coincide with the number of provided state names. If the model uses categorical values, the emission matrix also must be stochastic and must have a column for each observation name and a row for each state name. And if the model uses discrete data, all the values must be positive.  
+The model must have a stochastic transition matrix and a stochastic initial probability vector, also the row and column sizes must coincide with the number of provided state names. If the model uses categorical values, the emission matrix also must be stochastic and must have a column for each observation label and a row for each state name. And if the model uses discrete data, all the values must be positive assuming that they are counts.  
 }
 
 \value{
@@ -53,25 +53,6 @@ params <- list( "Model" = "HMM",
 verifiedModel <- verifyModel(params)
 print(verifiedModel)
 
-## Values for a hidden Markov model with continuous observations
-
-n <- c("Low","Normal","High")
-
-A <- matrix(c(0.5, 0.3,0.2,
-              0.2, 0.6, 0.2,
-              0.1, 0.3, 0.6),
-            ncol=length(n), byrow=TRUE)
-
-B <- matrix(c(0,100,            # First Gaussian with mean 0 and standard deviation 100
-              500,300,          # Second Gaussian with mean 500 and standard deviation 300
-              1000,200),        # Third Gaussian with mean 1000 and standard deviation 200
-            nrow=length(n), byrow=TRUE)
-
-Pi <- rep(1/length(n), length(n))
-
-HMM.real <- verifyModel(list("Model"="GHMM", "StateNames" = n, "A" = A, "B" = B, "Pi" = Pi))
-print(HMM.real)
-
 ## Values for a hidden Markov model with discrete observations
 
 n <- c("Low","Normal","High")
@@ -89,6 +70,59 @@ Pi <- rep(1/length(n), length(n))
 
 HMM.discrete <- verifyModel(list("Model"="PHMM", "StateNames" = n, "A" = A, "B" = B, "Pi" = Pi))
 print(HMM.discrete)
+
+## Values for a hidden Markov model with continuous observations                          
+# Number of hidden states = 3
+# Univariate gaussian mixture model
+
+N = c("Low","Normal", "High")
+A <- matrix(c(0.5, 0.3,0.2,
+              0.2, 0.6, 0.2,
+              0.1, 0.3, 0.6),
+            ncol= length(N), byrow = TRUE)
+
+Mu <- matrix(c(0, 50, 100), ncol = length(N))
+Sigma <- array(c(144, 400, 100), dim = c(1,1,length(N)))
+Pi <- rep(1/length(N), length(N))
+
+newModel <- verifyModel(list( "Model"="GHMM", 
+                              "StateNames" = N,
+                              "A" = A, 
+                              "Mu" = Mu, 
+                              "Sigma" = Sigma, 
+                              "Pi" = Pi))
+
+
+## Values for a hidden Markov model with continuous observations                          
+# Number of hidden states = 2
+# Multivariate gaussian mixture model
+# Observed vector with dimensionality of 3
+N = c("X1","X2")
+M <- 3
+
+# Same number of dimensions
+Sigma <- array(0, dim =c(M,M,length(N)))
+Sigma[,,1] <- matrix(c(1.0,0.8,0.8,
+                       0.8,1.0,0.8,
+                       0.8,0.8,1.0), ncol = M)
+Sigma[,,2] <- matrix(c(1.0,0.4,0.6,
+                       0.4,1.0,0.8,
+                       0.6,0.8,1.0), ncol = M)
+Mu <- matrix(c(0, 5, 
+               10, 0, 
+               5, 10), nrow = M)
+
+A <- matrix(c(0.6,0.3,
+              0.4, 0.7), ncol = length(N))
+Pi <- c(0.5, 0.5)
+
+newModel <- verifyModel(list( "Model" = "GHMM",
+                                "StateNames" = N,
+                                "A" = A, 
+                                "Mu" = Mu, 
+                                "Sigma" = Sigma, 
+                                "Pi" = Pi))
+
 
 }
 

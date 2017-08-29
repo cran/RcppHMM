@@ -6,7 +6,7 @@ Set the model parameters
 }
 
 \description{
-Function used to set the model parameters. This function verifies that all the parameters size agree with the names size.    
+Function used to set the model parameters. This function verifies that all the parameters size agree with each other.    
 }
 
 \usage{
@@ -41,32 +41,9 @@ B <- matrix(c(0.1930795, 0.2753869, 0.3463100, 0.1852237,
 Pi <- c(0.4757797, 0.5242203)
 
 newModel <- setParameters(newModel,
-                    list( "A" = A,
-                          "B" = B,
-                          "Pi" = Pi) )
-
-## Values for a hidden Markov model with continuous observations
-
-set.seed(1000)
-n <- 3
-newModel <- initGHMM(n) 
-
-A <- matrix(c(0.5, 0.3, 0.2,
-              0.2, 0.6, 0.2,
-              0.1, 0.3, 0.6),
-            ncol= n, byrow=TRUE)
-
-B <- matrix(c(0,100,            # First Gaussian with mean 0 and standard deviation 100
-              500,300,          # Second Gaussian with mean 500 and standard deviation 300
-              1000,200),        # Third Gaussian with mean 1000 and standard deviation 200
-            nrow=n, byrow=TRUE)
-
-Pi <- rep(1/n, n)
-
-newModel <- setParameters(newModel,
-                    list( "A" = A,
-                          "B" = B,
-                          "Pi" = Pi) )
+                          list( "A" = A,
+                                "B" = B,
+                                "Pi" = Pi) )
 
 ## Values for a hidden Markov model with discrete observations
 
@@ -87,9 +64,64 @@ Pi <- rep(1/n , n)
 
 
 newModel <- setParameters(newModel,
-                    list( "A" = A,
-                          "B" = B,
-                          "Pi" = Pi) )
+                          list( "A" = A,
+                                "B" = B,
+                                "Pi" = Pi) )
+
+## Values for a hidden Markov model with continuous observations                          
+# Number of hidden states = 3
+# Univariate gaussian mixture model
+N <- 3
+newModel <- initGHMM(N)
+
+A <- matrix(c(0.5, 0.3,0.2,
+              0.2, 0.6, 0.2,
+              0.1, 0.3, 0.6),
+            ncol= N, byrow = TRUE)
+
+Mu <- matrix(c(0, 50, 100), ncol = N)
+Sigma <- array(c(144, 400, 100), dim = c(1,1,N))
+Pi <- rep(1/N, N)
+
+newModel <- setParameters(newModel,
+                          list( "A" = A, 
+                                "Mu" = Mu, 
+                                "Sigma" = Sigma, 
+                                "Pi" = Pi))
+
+
+## Values for a hidden Markov model with continuous observations                          
+# Number of hidden states = 2
+# Multivariate gaussian mixture model
+# Observed vector with dimensionality of 3
+N <- 2
+M <- 3
+set.seed(100)
+newModel <- initGHMM(N,M)
+
+# Same number of dimensions
+Sigma <- array(0, dim =c(M,M,N))
+Sigma[,,1] <- matrix(c(1.0,0.8,0.8,
+                       0.8,1.0,0.8,
+                       0.8,0.8,1.0), ncol = M)
+Sigma[,,2] <- matrix(c(1.0,0.4,0.6,
+                       0.4,1.0,0.8,
+                       0.6,0.8,1.0), ncol = M)
+Mu <- matrix(c(0, 5, 
+               10, 0, 
+               5, 10), ncol = N)
+
+A <- matrix(c(0.6,0.3,
+              0.4, 0.7), ncol = N)
+Pi <- c(0.5, 0.5)
+
+newModel <- setParameters(newModel, 
+                          list( "A" = A, 
+                                "Mu" = Mu, 
+                                "Sigma" = Sigma, 
+                                "Pi" = Pi))
+
+                                
 }
 
 \keyword{methods}

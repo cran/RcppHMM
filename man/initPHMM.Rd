@@ -6,7 +6,7 @@
 }
 
 \description{
-Function used to generate a hidden Markov model with random parameters. The code for the methods with categorical values or continuous data can be viewed in \code{"\link{initHMM}"} and \code{"\link{initGHMM}"}, respectively.  
+Function used to generate a hidden Markov model with random parameters. This model is used when the observed data are counts that can be modelled with a mixture of Poissons. The code for the methods with categorical values or continuous data can be viewed in \code{"\link{initHMM}"} and \code{"\link{initGHMM}"}, respectively.  
 }
 
 \usage{

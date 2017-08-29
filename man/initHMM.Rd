@@ -2,7 +2,7 @@
 \alias{initHMM}
 
 \title{
-Random Initialization for a Hidden Markov Model with Categoric Emissions
+Random Initialization for a Hidden Markov Model with Categoric (Labeled) Emissions
 }
 
 \description{

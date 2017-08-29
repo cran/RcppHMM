@@ -6,8 +6,8 @@
 // included dependencies
 #include "vHMM.h"
 #include "HMM.h"
-#include "HMMcont.h"
 #include "HMMpoisson.h"
+#include "MultiGHMM.h"
 
 /*
 * note : RcppExport is an alias to ‘extern "C"‘ defined by Rcpp.
@@ -27,9 +27,9 @@
 
 //  hidden Markov model
 //  Model initialiation functions
-RcppExport SEXP initHMM(SEXP n, SEXP m);    //  Categorical observations
-RcppExport SEXP initGHMM(SEXP n);           //  Continous observations
-RcppExport SEXP initPHMM(SEXP n);           //  Discrete observations
+RcppExport SEXP initHMM(SEXP n, SEXP m);        //  Categorical observations
+RcppExport SEXP initGHMM(SEXP n, SEXP m);       //  Univariate m = 1 or Multivariate m > 1 Continuous observations
+RcppExport SEXP initPHMM(SEXP n);               //  Discrete observations
 //  If the user does the model object, it verifies if it fulfills all the requirements
 RcppExport SEXP verifyModel(SEXP model);
 //  After the model is established, if it is necessary to change some parameters the user can use these functions

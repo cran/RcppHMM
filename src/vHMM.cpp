@@ -48,11 +48,13 @@ void vHMM::setStateNames(CharacterVector stateNames)
 {
     if( stateNames.size() != m_N)
         Rf_error("The number of state names does not coincide with the one declared.");
-    m_StateNames = stateNames;
+    m_StateNames = CharacterVector(clone(stateNames));
 }
 
 void vHMM::setA(NumericMatrix A)
 {    
+    if(A.ncol() != m_N || A.nrow() != m_N)
+        Rf_error("The transition matrix size is wrong");
     if(verifyMatrix(A) == false)
         Rf_error("The transition matrix is not normalized");
     m_A = A;       
@@ -60,6 +62,8 @@ void vHMM::setA(NumericMatrix A)
 
 void vHMM::setPi(NumericVector Pi)
 {
+    if(Pi.size() != m_N)
+        Rf_error("The initial probability vector size is wrong");
     if(verifyVector(Pi) == false)        
         Rf_error("The initial probability vector is not normalized");
     m_Pi = Pi;
@@ -67,13 +71,18 @@ void vHMM::setPi(NumericVector Pi)
 
 void vHMM::setParameters(NumericMatrix A, NumericMatrix B, NumericVector Pi)
 {
-    if(verifyVector(Pi) == false)        
+    if(Pi.size() != m_N)
+        Rf_error("The initial probability vector size is wrong");
+    if(verifyVector(Pi) == false)
         Rf_error("The initial probability vector is not normalized");
-    if(verifyMatrix(A) == false)        
-        Rf_error("The transition matrix is not normalized");    
-
+    
+    if(A.ncol() != m_N || A.nrow() != m_N)
+        Rf_error("The transition matrix size is wrong");
+    if(verifyMatrix(A) == false)
+        Rf_error("The transition matrix is not normalized");  
+      
     m_Pi = NumericVector(clone(Pi));
-    m_A = NumericMatrix(clone(A));             
+    m_A = NumericMatrix(clone(A));            
 }
 
 //  Not set. To be overriden by the inherited classes

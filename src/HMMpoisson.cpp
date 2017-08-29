@@ -114,7 +114,10 @@ NumericVector HMMpoisson::getB(void) const
 //--------------------------------------------------------------------------
 
 void HMMpoisson::setB(NumericVector B)
-{           
+{        
+    if(B.size() != m_N)
+        Rf_error("The emission vector size is wrong");
+
     for(int i = 0; i < m_N; i++)    
         if(B[i] <= 0)
             throw invalid_argument("Lambda must be greater than zero"); 
@@ -124,13 +127,19 @@ void HMMpoisson::setB(NumericVector B)
 
 void HMMpoisson::setParameters(NumericMatrix A, NumericVector B, NumericVector Pi)
 {    
+    if(Pi.size() != m_N)
+        Rf_error("The initial probability vector size is wrong");
     if(verifyVector(Pi) == false)
         Rf_error("The initial probability vector is not normalized");
+    
+    if(A.ncol() != m_N || A.nrow() != m_N)
+        Rf_error("The transition matrix size is wrong");
     if(verifyMatrix(A) == false)
-        Rf_error("The transition matrix is not normalized");
+        Rf_error("The transition matrix is not normalized");  
+
     setB(B);            
     m_Pi = NumericVector(clone(Pi));
-    m_A = NumericMatrix(clone(A));    
+    m_A = NumericMatrix(clone(A));   
 }
 
 //--------------------------------------------------------------------------
@@ -316,7 +325,7 @@ void HMMpoisson::learnEM(IntegerMatrix sequences, unsigned short int iter, doubl
         expectationMaximization(sequences, pseudo);
         newLL = loglikelihood(sequences) ;   
 
-        if(isnan(newLL))
+        if(std::isnan(newLL))
         {
             if(print)
                 Rcout << "Convergence error, new initialization needed\n";           
@@ -364,7 +373,7 @@ void HMMpoisson::learnBW(IntegerVector sequences, unsigned short int iter, doubl
         //  A new parameter initialization is recomended        
         BaumWelch(sequences, pseudo);
         newLL = evaluation(sequences);
-        if(isnan(newLL))
+        if(std::isnan(newLL))
         {
             if(print)
                 Rcout << "Convergence error, new initialization needed\n";           
@@ -383,49 +392,6 @@ void HMMpoisson::learnBW(IntegerVector sequences, unsigned short int iter, doubl
     } while(counter < iter && error > delta); // Convergence criteria
     Rcout << "Finished at Iteration: " << counter << " with Error: " << error  << "\n";
 }
-
-
-/*
-void HMMpoisson::learnEMParallel(IntegerMatrix sequences, unsigned short int iter, double delta , unsigned char pseudo , bool print )
-{
-   double newLL, error;
-   double lastLL = loglikelihood(sequences);
-   unsigned int counter = 0; 
-   double max, min = 0.0;      
-
-    for(unsigned int i = 0; i < sequences.size(); i++)
-    {
-        auto tmin =  min_element ( sequences[i].begin(), sequences[i].end() );
-        auto tmax =  max_element ( sequences[i].begin(), sequences[i].end() );
-        if(*tmin < min)
-            min = *tmin;            
-        if(*tmax > max)
-            max = *tmax;
-    }
-       
-    //  Ajustamos el modelo
-    do{
-        if(isnan(lastLL))
-        {
-            if(print)
-                Rcout << "Error de convergencia, nueva inicialización" << endl;           
-            randomInit(min, max);
-            lastLL = loglikelihood(sequences);
-            counter++;
-            error = 1000;
-            continue;
-        }        
-        expectationMaximizationParallel(sequences, pseudo);
-        newLL = loglikelihood(sequences) ;
-        error = fabs(newLL - lastLL);        
-        lastLL = newLL;
-        counter++;
-        if(print)
-            Rcout << "Iter: " << counter << " Error: " << error  << endl;
-    } while(error > delta && counter < iter);
-    Rcout << "\nFinished at Iter: " << counter << " with Error: " << error  << endl;
-}
-//*/
 
 //--------------------------------------------------------------------------
 // SIMULATION
@@ -502,19 +468,6 @@ List HMMpoisson::toList(void) const
             Named("Pi", getPi() )
         );
 }
-
-//  Function to print all the parameters into the console
-/*
-ostream& HMMpoisson::print(ostream& out) const
-{
-    vHMM::print(out);
-    
-    for(unsigned int i = 0; i < m_N; i++ )
-        out << "B-lambda: " << m_B[i] << "\n";        
-    
-    return out;
-}
-*/
 
 //--------------------------------------------------------------------------
 // PROTECTED
@@ -689,118 +642,6 @@ void HMMpoisson::forwardBackwardGamma(IntegerVector sequence, scaledMatrix & for
 //--------------------------------------------------------------------------
 // LEARNING
 //--------------------------------------------------------------------------
-
-/* 
-//  TO BE IMPLEMENTED  (memory leak - clone use recommended)
-void HMMpoisson::expectationMaximizationParallel( IntegerMatrix sequences, unsigned int pseudo)
-{
-    unsigned int seqLen, length, i, j, k, s;   
-    double temp;
-
-    seqLen = sequences.size();
-    length = sequences[0].size();
-
-    //  Valores de B
-    NumericVector B = getB(); 
-
-    //  Agrego una dimensión para poder hacer el multithread
-    vector<NumericMatrix> Amean(seqLen,
-                            NumericMatrix(m_N, 
-                            NumericVector(m_N, pseudo)));
-    NumericMatrix Bmean(seqLen,
-                     NumericVector(m_N, pseudo));                                                 
-    NumericMatrix Pimean(seqLen,
-                     NumericVector(m_N, pseudo));
-
-    //  Denominadores
-    NumericMatrix denomA(seqLen,
-                     NumericVector(m_N, pseudo));
-
-    NumericMatrix denomB(seqLen,
-                     NumericVector(m_N, pseudo));                       
-         
-    //  Para cada secuencia vista, ¿region critica?
-    // ToDo: Threadprivate vs private
-    #pragma omp parallel private(i, j, k, temp) shared(sequences, seqLen, length, Amean, Bmean, Pimean, denomA, denomB )
-    {
-        #pragma omp for
-        for(s = 0; s < seqLen ; s++)
-        {            
-            //  Expectation step
-
-            //  Variables para el paso se Esperanza
-            NumericVector scaledf(length,0);
-            NumericVector scaledb(length+ 1,0);
-
-            NumericMatrix matrix(m_N, scaledf); //  Este es gamma
-
-            scaledMatrix forward = {scaledf,  matrix};
-            scaledMatrix backward = {scaledb, matrix};
-
-            // ToDo: revisar el forwardBackward protegido y pasar eel codigo de regreso al forwardBckwardGamma
-            forwardBackwardGamma(sequences[s], forward, backward, scaledf, scaledb, matrix, length);
-
-            //  Maximization         
-            //  Estado X_{t}
-            for( i = 0; i < m_N; i++)
-            {
-                Pimean[s][i] = matrix(i,0);                                                           
-
-                //Para cada observación  Este es t-1
-                for(j = 0; j < (length-1); j++)
-                {                
-                    //  Para estado X_{t+1}
-                    for(k = 0; k < m_N ; k++ )
-                    {
-                        temp = matrix(i,j)*m_A(i,k)*R::dpois(sequences(s,j+1), m_B[k], false)*backward.matrix[k][j+1]/
-                                        (backward.matrix(i,j)* backward.scaling[j+1] ); // El +1 se hace debido al desfase en la matriz de escalamiento, no porque sea del siguiente tiempo
-                        Amean[s](i,k) += temp;
-
-                        //  Denominador de A dado X_{t}
-                        denomA[s][i] += temp;
-                    }
-                    
-                    //  Para las observaciones, es el mismo valor
-                    Bmean[s][i] += (matrix(i,j)*sequences(s,j));  //  Lambda
-                    denomB[s][i] += matrix(i,j);                                       
-                }
-                //  Ya que el ciclo anterior es hasta (length-2), necesitamos agregar ese ultimo valor en el caso de B y su denominador
-                Bmean[s][i] += (matrix(i,length-1)*sequences(s,length-1));  //Lambda
-                denomB[s][i] += matrix(i,length-1); 
-            }                        
-        } 
-    }
-
-    //Unimos todos los valores generados en el multi-hilo
-    double tempPi, tempB, tempDA, tempDB;
-    for(i = 0; i < m_N; i++)
-    {
-        tempPi = tempB = tempDA = tempDB = 0;
-        NumericVector tempA(m_N, 0);
-
-        for(s = 0; s < seqLen; s++)
-        {
-            tempPi+= Pimean[s][i];            
-            tempDA+= denomA[s][i];
-            tempDB+= denomB[s][i];
-            for(j = 0; j < m_N ; j++)
-                tempA[j] += Amean[s](i,j);
-            tempB+= Bmean[s][i];                                                                        
-        }
-
-        //  Una vez analizadas todas laas secuencias, podemos hacer la división de "normalización"
-        //  Normalizamos Pi
-        m_Pi[i] = tempPi / seqLen;
-
-        //  Normalizamos A
-        for(j = 0; j < m_N; j++)
-            m_A(i,j) = tempA[j]/ tempDA;  
-        
-        //  Normalizamos B
-        m_B[i] = poisson(tempB / tempDB);                                  
-    }
-}
-//*/
 
 //  Function used for parameter estimation given a set of sequences
 void HMMpoisson::expectationMaximization( IntegerMatrix sequences, unsigned int pseudo)

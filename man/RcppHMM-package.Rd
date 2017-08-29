@@ -7,14 +7,14 @@
 }
 
 \description{
-  This package can model observations based on hidden Markov models. The observations can be considered to be emitted by multinomial distribution, mixture of Gaussians or a mixture of Poissons. It can be used for inference, parameter estimation and simulation.  
+  This package can model observations based on hidden Markov models. The observations can be considered to be emitted by a multinomial distribution, A mixture of Gaussians or a mixture of Poissons. It can be used for inference, parameter estimation and simulation.  
 }
 \details{
-  The package can be used to represent a time discrete hidden Markov model. The states can generate categorical, continuous or discrete observations. The hidden state transition and observations can be randomly generated based on fixed parameters. Also, the inference methods can be used to evaluate sequences or decode the hidden states that generated the observations. Finally, the model parameters can be estimated by a single or multiple observed sequences.  
+  The package can be used to represent a time discrete hidden Markov model. The states can generate categorical (labeled), continuous or discrete observations. The hidden state transition and observations can be randomly generated based on fixed parameters. Also, the inference methods can be used to evaluate sequences or decode the hidden states that generated the observations. Finally, the model parameters can be estimated by a single or multiple observed sequences.  
 }
 
 \author{
-Roberto A. Cardenas-Ovando.
+Roberto A. Cardenas-Ovando, Julieta Noguez and Claudia Rangel-Escareno
 
 Maintainer: Roberto A. Cardenas-Ovando <robalecarova@gmail.com>
 }
