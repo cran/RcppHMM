@@ -9,8 +9,9 @@
 \description{
   This package can model observations based on hidden Markov models. The observations can be considered to be emitted by a multinomial distribution, A mixture of Gaussians or a mixture of Poissons. It can be used for inference, parameter estimation and simulation.  
 }
+
 \details{
-  The package can be used to represent a time discrete hidden Markov model. The states can generate categorical (labeled), continuous or discrete observations. The hidden state transition and observations can be randomly generated based on fixed parameters. Also, the inference methods can be used to evaluate sequences or decode the hidden states that generated the observations. Finally, the model parameters can be estimated by a single or multiple observed sequences.  
+  The package can be used to represent a discrete-time hidden Markov model. The states can generate categorical (labeled), continuous or discrete observations. The hidden state transition and observations can be randomly generated based on fixed parameters. Also, the inference methods can be used to evaluate sequences or decode the hidden states that generated the observations. Finally, the model parameters can be estimated by a single or multiple observed sequences.  
 }
 
 \author{
@@ -32,6 +33,7 @@ Rabiner L.; Juang, B.H. (1993) Fundamentals of Speech Recognition. \emph{Prentic
 }
 
 \examples{
+# Multinomial case
 # Set the model parameters to be estimated
 n <- c("First","Second")
 m <- c("A","T","C","G")
@@ -99,12 +101,12 @@ newModel <- learnEM(newModel,
 # Single sequence
 Y <- generateObservations(HMM , length)$Y
 
-#Evaluation
+# Evaluation
 
 evaluation(newModel, Y, "f")
 evaluation(newModel, Y, "b")
 
-#Hidden state decoding
+# Hidden state decoding
 
 hiddenStatesViterbi <- viterbi(newModel, Y)
 hiddenStatesFB <- forwardBackward( newModel, Y)

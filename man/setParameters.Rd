@@ -6,7 +6,7 @@ Set the model parameters
 }
 
 \description{
-Function used to set the model parameters. This function verifies that all the parameters size agree with each other.    
+Function used to set the model parameters. This function verifies that parameters and names correspond.
 }
 
 \usage{
@@ -14,8 +14,8 @@ setParameters(hmm , params)
 }
 
 \arguments{
-  \item{hmm}{a list that contains all the necesary variables to define a hidden Markov model.}
-  \item{params}{a list with the new parameters to set in the model.}
+  \item{hmm}{a list with the necessary variables to define a hidden Markov model.}
+  \item{params}{a list with the new parameters to be set in the model.}
 }
 
 \value{
@@ -103,16 +103,22 @@ newModel <- initGHMM(N,M)
 Sigma <- array(0, dim =c(M,M,N))
 Sigma[,,1] <- matrix(c(1.0,0.8,0.8,
                        0.8,1.0,0.8,
-                       0.8,0.8,1.0), ncol = M)
+                       0.8,0.8,1.0), ncol = M,  
+                     byrow = TRUE)
 Sigma[,,2] <- matrix(c(1.0,0.4,0.6,
                        0.4,1.0,0.8,
-                       0.6,0.8,1.0), ncol = M)
+                       0.6,0.8,1.0), ncol = M,
+                     byrow = TRUE)
 Mu <- matrix(c(0, 5, 
                10, 0, 
-               5, 10), ncol = N)
+               5, 10), 
+             nrow = M, 
+             byrow = TRUE)
 
-A <- matrix(c(0.6,0.3,
-              0.4, 0.7), ncol = N)
+A <- matrix(c(0.6,0.4,
+              0.3, 0.7), 
+            ncol = N,
+            byrow = TRUE)
 Pi <- c(0.5, 0.5)
 
 newModel <- setParameters(newModel, 
@@ -120,6 +126,7 @@ newModel <- setParameters(newModel,
                                 "Mu" = Mu, 
                                 "Sigma" = Sigma, 
                                 "Pi" = Pi))
+
 
                                 
 }

@@ -6,7 +6,7 @@ Set the names of the model
 }
 
 \description{
-Function used to set new hidden state names to the model. If it is a categorical model, it also sets the labels for the observations. This function verifies that all the parameters size agree with the provided new names.  
+Function used to set new hidden state names to the model. If it is a categorical model, it also sets the labels for the observations. This function verifies that all the parameters and new names agree in size.
 }
 
 \usage{
@@ -14,8 +14,8 @@ Function used to set new hidden state names to the model. If it is a categorical
 }
 
 \arguments{
-  \item{hmm}{a list that contains all the necesary variables to define a hidden Markov model.}
-  \item{names}{a list with the new names to set in the model.}
+  \item{hmm}{a list with the necessary variables to define a hidden Markov model.}
+  \item{names}{a list with the new names to be set in the model.}
 }
 
 \value{
