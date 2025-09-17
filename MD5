@@ -1,4 +1,4 @@
-44ac87c6901652151c932c44393df0ab *DESCRIPTION
+6d6d6a82e62ca956f945d4488327d0b9 *DESCRIPTION
 5bfd38718b618cfb6652bf69ec975763 *NAMESPACE
 0fc134cfc47818468bee53a2cd9c9612 *NEWS
 4dcaf8b529bac596e59ff416df1488d7 *R/RcppExports.R
@@ -20,8 +20,8 @@ b60505027938afb3c02fc3a6fa734249 *man/setParameters.Rd
 b6d3ee6065b3ce35f0b764be82ffe825 *src/HMM.h
 be26f41286ad976be1eef608a97e13c2 *src/HMMpoisson.cpp
 9c7addd10bfad9077cc828e8905dea0e *src/HMMpoisson.h
-fdcb2e0c2502ed804ae55e75cf88055c *src/Makevars
-fdcb2e0c2502ed804ae55e75cf88055c *src/Makevars.win
+b47b833ea7c5d6a8b64066f33cfba741 *src/Makevars
+b47b833ea7c5d6a8b64066f33cfba741 *src/Makevars.win
 98e40c357fb893831a2291fe02c7cb1a *src/MultiGHMM.cpp
 9850f5380dd5b437c6cf351e2829cd16 *src/MultiGHMM.h
 849cc3b6b79fe582a7ed61c20a0771ad *src/RcppHMM_init.c
